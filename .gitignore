@@ -1,0 +1,9 @@
+# API KEY OF NEWSAPI.org
+.env
+
+# Dataset and implementation plan
+dataset/
+
+#python cache files
+__pycache__/
+*.pyc
