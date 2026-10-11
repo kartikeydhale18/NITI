@@ -26,6 +26,7 @@ __pycache__/
 *.json
 !backend/tickers.json
 !frontend/*.json
+!vercel.json
 
 # Frontend dependencies & build artifacts
 frontend/node_modules/

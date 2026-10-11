@@ -33,7 +33,7 @@ Furthermore, when machine learning algorithms are connected directly to trading 
 ## 2. Architecture & Tech Stack
 
 ### System Architecture Diagram
-![NITI Architecture](docs/architecture.png)
+![NITI Architecture](docs/NITI_architecture_diagram.png)
 
 ```
 [ Financial News: CSV / What-If / Upload ]
@@ -185,7 +185,7 @@ NITI/
 │   ├── self_label.csv
 │   └── video_demo_15.csv
 ├── docs/                    <-- Documentation, deck, and diagrams
-│   ├── architecture.png     <-- High-resolution architecture diagram
+│   ├── NITI_architecture_diagram.png <-- High-resolution architecture diagram
 │   └── presentation_deck.md <-- 7-slide presentation deck
 ├── backend/                 <-- Backend application source code
 │   ├── api.py               # FastAPI REST API & Static Server
@@ -208,6 +208,6 @@ NITI/
 - [x] **Repository Public:** Yes
 - [x] **MIT License:** Included in [`LICENSE`](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/LICENSE)
 - [x] **Mandatory README Template:** Sections 1 to 5 implemented
-- [x] **Architecture Diagram:** Embedded in `docs/architecture.png`
+- [x] **Architecture Diagram:** Embedded in `docs/NITI_architecture_diagram.png`
 - [x] **No Confidential Data:** Synthetic & publicly available financial data only
 - [x] **Single Individual Submission:** Kartikey A. Dhale

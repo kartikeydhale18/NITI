@@ -1,0 +1,10 @@
+pandas
+requests
+python-docx
+python-dotenv
+transformers
+torch
+accelerate
+fastapi
+uvicorn
+python-multipart
