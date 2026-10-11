@@ -41,7 +41,7 @@ export default function HeroMetrics({ summary, historyCount }) {
       value: `$${investedUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       badge: `${investedPct.toFixed(2)}% INVESTED`,
       badgeType: 'pill-bullish',
-      subtext: 'Tactically hedged across S&P stocks',
+      subtext: 'Tactically hedged across stocks',
       icon: PieChart,
       iconColor: '#00e676'
     },

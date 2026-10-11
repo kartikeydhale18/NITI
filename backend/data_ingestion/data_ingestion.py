@@ -42,23 +42,46 @@ class DataIngestor:
         if not self.news_api_key:
             print("Error: NEWS_API_KEY is not set.")
             return None
-        max_days_back = 10
-        oldest_allowed_date = datetime.now() - timedelta(days=max_days_back)
-        
-        if from_date:
-            requested_date = datetime.strptime(from_date, "%Y-%m-%d")
-            if requested_date < oldest_allowed_date:
-                safe_date = oldest_allowed_date.strftime("%Y-%m-%d")
-                print(f" Warning: Requested date {from_date} is too old. Auto-adjusting to {safe_date} to prevent API errors.")
-                from_date = safe_date
+        # NewsAPI Developer Plan restrictions:
+        # 1. 24-hour delay on real-time news (to_date cannot be today)
+        # 2. Maximum historical search window is 30 days
+        yesterday = datetime.now() - timedelta(days=1)
+        yesterday_str = yesterday.strftime("%Y-%m-%d")
+        oldest_allowed_date = datetime.now() - timedelta(days=29)
 
-        print(f"Fetching news for '{query}'...")
+        # Enforce 24-hour delay on to_date
+        if to_date:
+            try:
+                requested_to = datetime.strptime(to_date, "%Y-%m-%d")
+                if requested_to > yesterday:
+                    print(f"[*] Note: NewsAPI Developer tier requires a 24-hour delay. Clamping 'to_date' to yesterday: {yesterday_str}")
+                    to_date = yesterday_str
+            except ValueError:
+                to_date = yesterday_str
+        else:
+            to_date = yesterday_str
+
+        # Enforce valid range for from_date
+        if from_date:
+            try:
+                requested_from = datetime.strptime(from_date, "%Y-%m-%d")
+                if requested_from < oldest_allowed_date:
+                    safe_from = oldest_allowed_date.strftime("%Y-%m-%d")
+                    print(f"[*] Warning: from_date {from_date} exceeds 30-day limit. Auto-adjusting to: {safe_from}")
+                    from_date = safe_from
+                if requested_from > yesterday:
+                    from_date = (yesterday - timedelta(days=6)).strftime("%Y-%m-%d")
+            except ValueError:
+                from_date = (yesterday - timedelta(days=6)).strftime("%Y-%m-%d")
+
+        print(f"Fetching news for '{query}' (Date range: {from_date} to {to_date})...")
         url = "https://newsapi.org/v2/everything"
         
         params = {
             'q': query,
             'apiKey': self.news_api_key,
-            'language': 'en'
+            'language': 'en',
+            'sortBy': 'publishedAt'
         }
         
         if from_date:

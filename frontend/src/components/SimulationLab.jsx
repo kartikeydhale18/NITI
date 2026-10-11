@@ -27,15 +27,27 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [uploadSuccessMsg, setUploadSuccessMsg] = useState(null);
 
-  // NewsAPI Ingestion State
+  // NewsAPI Ingestion State (Enforcing 24h delay on NewsAPI developer plan)
+  const yesterdayStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  })();
+  const defaultFromStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 8);
+    return d.toISOString().split('T')[0];
+  })();
+  const minFromStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 29);
+    return d.toISOString().split('T')[0];
+  })();
+
   const [newsApiQuery, setNewsApiQuery] = useState('stocks OR finance OR economy');
   const [newsApiLimit, setNewsApiLimit] = useState(10);
-  const [newsApiFromDate, setNewsApiFromDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 7);
-    return d.toISOString().split('T')[0];
-  });
-  const [newsApiToDate, setNewsApiToDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [newsApiFromDate, setNewsApiFromDate] = useState(defaultFromStr);
+  const [newsApiToDate, setNewsApiToDate] = useState(yesterdayStr);
 
   // Ingested Articles Feed
   const [ingestedArticles, setIngestedArticles] = useState([]);
@@ -85,7 +97,7 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
         csv_filename: csvFileToUse || selectedCsv,
         query: newsApiQuery,
         from_date: sourceMode === 'newsapi' ? newsApiFromDate : undefined,
-        to_date: sourceMode === 'newsapi' ? newsApiToDate : undefined,
+        to_date: sourceMode === 'newsapi' ? (newsApiToDate > yesterdayStr ? yesterdayStr : newsApiToDate) : undefined,
         limit: sourceMode === 'csv' ? Number(csvLimit) : Number(newsApiLimit),
         offset: 0
       };
@@ -411,6 +423,8 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
               <input
                 type="date"
                 value={newsApiFromDate}
+                min={minFromStr}
+                max={newsApiToDate || yesterdayStr}
                 onChange={(e) => setNewsApiFromDate(e.target.value)}
                 style={{
                   width: '100%',
@@ -428,12 +442,21 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
 
             <div style={{ width: '150px' }}>
               <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 600 }}>
-                TO DATE:
+                TO DATE (MAX: YESTERDAY):
               </label>
               <input
                 type="date"
                 value={newsApiToDate}
-                onChange={(e) => setNewsApiToDate(e.target.value)}
+                min={newsApiFromDate || minFromStr}
+                max={yesterdayStr}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val && val > yesterdayStr) {
+                    setNewsApiToDate(yesterdayStr);
+                  } else {
+                    setNewsApiToDate(val);
+                  }
+                }}
                 style={{
                   width: '100%',
                   padding: '9px 12px',
@@ -483,6 +506,26 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
                 <Globe size={15} className={isFetchingNews ? 'animate-spin' : ''} />
                 <span>{isFetchingNews ? 'Querying NewsAPI...' : '🌐 Fetch Live News from NewsAPI'}</span>
               </button>
+            </div>
+
+            {/* NewsAPI 24h Restriction Notice */}
+            <div style={{
+              width: '100%',
+              marginTop: '10px',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              background: 'rgba(247, 147, 26, 0.08)',
+              border: '1px solid rgba(247, 147, 26, 0.2)',
+              fontSize: '0.72rem',
+              color: '#f7931a',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <AlertTriangle size={13} style={{ flexShrink: 0 }} />
+              <span>
+                <strong>NewsAPI Developer Plan Notice:</strong> Real-time articles within the last 24 hours require a paid subscription. Search is restricted between yesterday ({yesterdayStr}) and 30 days ago to prevent API errors.
+              </span>
             </div>
           </div>
         )}
