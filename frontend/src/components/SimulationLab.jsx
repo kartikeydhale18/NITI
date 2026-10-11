@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, BrainCircuit, 
-  Cpu, Database, Globe, FileSpreadsheet, RefreshCw, Layers, ArrowUpRight, ArrowDownRight, Minus, Trash2, Calendar, Upload
+  Cpu, Database, Globe, FileSpreadsheet, RefreshCw, Layers, ArrowUpRight, ArrowDownRight, Minus, Trash2, Calendar, Upload, Download
 } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000/api';
+const API_BASE = import.meta.env.VITE_API_BASE || (import.meta.env.PROD ? '/api' : 'http://127.0.0.1:8000/api');
 
 /**
  * SimulationLab Component (News Ingestion Hub & Dual-AI Rebalance Sandbox)
@@ -378,6 +378,32 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
                   <Upload size={15} className={isUploadingCsv ? 'animate-spin' : ''} />
                   <span>{isUploadingCsv ? 'Uploading CSV...' : '📤 Upload Custom CSV'}</span>
                 </button>
+
+                {/* Download Selected Dataset Link */}
+                {selectedCsv && (
+                  <a
+                    href={`${API_BASE}/download-dataset/${encodeURIComponent(selectedCsv)}`}
+                    download={selectedCsv}
+                    className="btn-secondary"
+                    title={`Download ${selectedCsv} to your computer`}
+                    style={{
+                      padding: '10px 16px',
+                      borderColor: 'rgba(0, 240, 255, 0.35)',
+                      color: '#00f0ff',
+                      background: 'rgba(0, 240, 255, 0.06)',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      borderRadius: '10px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    <Download size={14} />
+                    <span>Download CSV</span>
+                  </a>
+                )}
               </div>
             </div>
 

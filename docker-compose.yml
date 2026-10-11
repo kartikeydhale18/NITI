@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  niti-app:
+    build: .
+    container_name: niti-production
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/portfolio.db:/app/backend/portfolio.db
+      - ./backend/current_portfolio.csv:/app/backend/current_portfolio.csv
+      - ./dataset:/app/dataset
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped

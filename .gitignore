@@ -5,7 +5,12 @@
 .venv/
 
 # Dataset and implementation plan
-dataset/
+dataset/*
+!dataset/newsdata_labelled_v2.csv
+!dataset/newsdata_labelled_v3.csv
+!dataset/self_label.csv
+!dataset/video_demo_15.csv
+!dataset/dataset_news.csv
 
 #python cache files
 __pycache__/
@@ -16,6 +21,7 @@ __pycache__/
 
 #temporary news files
 *.csv
+!dataset/*.csv
 *.json
 !backend/tickers.json
 !frontend/*.json

@@ -5,6 +5,7 @@ import re
 import sqlite3
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -120,18 +121,35 @@ def get_status():
 
 @app.get("/api/news-sources")
 def get_news_sources():
+    curated_eval_datasets = [
+        "newsdata_labelled_v2.csv",
+        "newsdata_labelled_v3.csv",
+        "self_label.csv"
+    ]
     csv_files = []
     if os.path.exists(DATASET_DIR):
         for f in os.listdir(DATASET_DIR):
-            if f.endswith(".csv"):
+            if f.endswith(".csv") and f not in csv_files:
                 csv_files.append(f)
-    csv_files.sort()
+    # Sort placing curated evaluation datasets at the top
+    csv_files.sort(key=lambda x: (x not in curated_eval_datasets, curated_eval_datasets.index(x) if x in curated_eval_datasets else x))
     has_newsapi_key = bool(os.environ.get("NEWS_API_KEY"))
     return {
         "csv_files": csv_files,
         "default_csv": "newsdata_labelled_v2.csv" if "newsdata_labelled_v2.csv" in csv_files else (csv_files[0] if csv_files else ""),
         "has_newsapi_key": has_newsapi_key
     }
+
+@app.get("/api/download-dataset/{filename}")
+def download_dataset(filename: str):
+    """
+    Allows evaluators to download evaluation datasets directly from the server.
+    """
+    clean_filename = os.path.basename(filename)
+    file_path = os.path.normpath(os.path.join(DATASET_DIR, clean_filename))
+    if not os.path.exists(file_path) or not clean_filename.endswith(".csv"):
+        raise HTTPException(status_code=404, detail="Dataset file not found.")
+    return FileResponse(file_path, media_type="text/csv", filename=clean_filename)
 
 @app.post("/api/upload-csv")
 async def upload_csv(file: UploadFile = File(...)):
@@ -589,6 +607,12 @@ def get_sample_scenarios():
             "expected": "Bullish (+0.6 to +0.8)"
         }
     ]
+
+# Mount production frontend build if available
+FRONTEND_DIST = os.path.normpath(os.path.join(BASE_DIR, "..", "frontend", "dist"))
+if os.path.exists(FRONTEND_DIST):
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend_static")
 
 if __name__ == "__main__":
     import uvicorn
