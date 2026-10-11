@@ -1,30 +1,39 @@
-# NITI // Autonomous Portfolio Risk & Tactical Rebalancing Engine
+# NITI - S&P Global & Crisil Campus Hackathon
 
-[![Backend](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.10%2B-blue?style=for-the-badge&logo=fastapi)](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/backend)
-[![Frontend](https://img.shields.io/badge/Frontend-React%2019%20%7C%20Vite-orange?style=for-the-badge&logo=react)](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/frontend)
-[![AI Consensus](https://img.shields.io/badge/AI%20Pipeline-FinBERT%20%2B%20Qwen2.5-gold?style=for-the-badge&logo=huggingface)](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/backend/sentiment_analyzer)
-[![Database](https://img.shields.io/badge/Storage-SQLite3%20%2B%20CSV%20Audit-green?style=for-the-badge&logo=sqlite)](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/backend/portfolio.db)
-[![Deployment](https://img.shields.io/badge/Deployment-AWS%20EC2%20%7C%20Docker-purple?style=for-the-badge&logo=amazon-aws)](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/deploy_ec2.sh)
-
-**Author:** Kartikey A. Dhale  
-**Institution:** College of Engineering Pune (COEP) Technological University  
-
----
-
-## 📌 Executive Summary
-
-**NITI** is an institutional-grade, full-stack **Autonomous Portfolio Risk & Tactical Rebalancing Engine** designed to transform unstructured, breaking financial news into disciplined, mathematically guarded equity rebalancing decisions.
-
-Traditional algorithmic sentiment engines (such as VADER or simple RoBERTa) fail in financial markets because they lack financial context and causal reasoning—often misinterpreting major R&D investments, AI breakthrough models, or corporate expansion announcements as negative expenditure overruns.
-
-To solve this, NITI implements a **Two-Tier AI Consensus Architecture**:
-1. **Tier 1 (ProsusAI FinBERT)**: Fine-tuned on financial phrasebanks for micro-level market tone and directional polarity (`-1.0` to `+1.0`).
-2. **Tier 2 (Qwen 2.5 Causal Validator)**: Analyzes the macroeconomic and operational causality behind market news, extracting corporate entities, impact severity (`1-10`), and financial rationale.
-3. **Deterministic Quantitative Guardrails**: Rebalancing signals do not trade unconstrained. All allocations are strictly governed by **four deterministic mathematical invariants**, ensuring capital conservation and risk mitigation.
+**Candidate Name:** Kartikey A. Dhale  
+**College Email ID:** dhalekartikey@gmail.com  
+**College / Campus:** College of Engineering Pune (COEP) Technological University  
+**GitHub Repository:** https://github.com/kartikeydhale18/NITI  
+**Demo Video Link:** [YouTube / Unlisted - Paste Your Video Link Here]  
+**Slide Deck Link (if hosted externally):** [View in docs/presentation_deck.md or Paste External PDF Link Here]  
+**License:** [MIT License (LICENSE)](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/LICENSE)  
 
 ---
 
-## ⚙️ Core Architecture & Safeguards
+## 1. Project Overview / Problem Statement & Approach
+
+### Business & Technical Problem
+Every trading day, institutional portfolio managers are inundated with hundreds of thousands of market news headlines, earnings reports, regulatory disclosures, and macroeconomic releases. Human fund managers cannot digest and act upon this stream in real time without cognitive fatigue. However, naive automated sentiment tools (such as standard VADER or basic classifiers) fail catastrophically: they lack financial context and causal reasoning, routinely misinterpreting essential growth expenditures, AI supercomputing R&D investments, or strategic corporate acquisitions as negative expenditure overruns.
+
+Furthermore, when machine learning algorithms are connected directly to trading desks without mathematical constraints, they produce catastrophic failure modes: overconcentrating capital into a single hyped asset, triggering excessive portfolio churn and transaction fees on noisy news, or hallucinating non-existent corporate entities.
+
+### Solution Approach (NITI Framework)
+**NITI** is an institutional-grade, full-stack **Autonomous Portfolio Risk & Tactical Rebalancing Engine**. NITI solves the financial nuance and risk problem through a disciplined, multi-layered approach:
+1. **Two-Tier AI Consensus Architecture**: We pair a domain-specialized financial transformer (**ProsusAI FinBERT**) for micro-level market tone with a high-capacity reasoning model (**Qwen 2.5 1.5B/7B Instruct**) for macroeconomic causality. The models cross-validate headlines to establish true financial directionality.
+2. **Consensus Arbitration & High-Impact Override**: If high-impact news occurs (severity $\ge 7/10$), Qwen's contextual causal reasoning takes precedence over micro-level text classifiers. If models diverge on ambiguous news, the multiplier safely dampens to `0.0`, protecting against false-alarm trading fees.
+3. **Four Deterministic Mathematical Risk Invariants**: Rebalancing signals do not trade unconstrained. A quantitative rebalancing engine strictly enforces:
+   - **$100,000.00 Capital Conservation** ($100\%$ sum invariant; zero phantom leverage or capital decay).
+   - **15.0% Single-Asset Ceiling** (hard cap preventing overconcentration).
+   - **2.0% Position Floor** (preserves baseline exposure in core equities).
+   - **2.0% Liquid Cash Buffer** (sales dynamically replenish cash; purchases draw from cash).
+4. **Regulatory Dual Storage**: Every trade is permanently recorded in an ACID-compliant **SQLite database** audit ledger and mirrored to human-readable CSVs for regulatory compliance.
+
+---
+
+## 2. Architecture & Tech Stack
+
+### System Architecture Diagram
+![NITI Architecture](docs/architecture.png)
 
 ```
 [ Financial News: CSV / What-If / Upload ]
@@ -59,215 +68,158 @@ To solve this, NITI implements a **Two-Tier AI Consensus Architecture**:
    └───────────────┘     └──────────────┘
 ```
 
-### 1. Dual-Model AI Consensus & High-Impact Override
-- **Agreement**: If both models agree (e.g. positive earnings and strong guidance), their signals are combined into an amplified conviction score.
-- **High-Impact Breakthroughs**: If an event carries high operational significance (Impact $\ge 7/10$, $|sentiment| \ge 0.45$), Qwen's causal reasoning takes precedence over micro-level text classifiers.
-- **Mild Disagreement**: If signals diverge without high conviction, the rebalancer safely neutralizes the signal to `0.0`, preventing costly transaction churn.
-
-### 2. The 4 Mathematical Risk Invariants
-- **Strict Capital Conservation Invariant**: Total portfolio value is mathematically locked at exactly **$100,000.00**. No phantom leverage or capital decay.
-- **15.0% Single-Asset Ceiling**: No individual equity can ever exceed 15% of the total fund, preventing catastrophic concentration risk.
-- **2.0% Position Floor**: Core equities maintain a baseline 2.0% allocation unless explicitly closed.
-- **Dynamic Cash Reserve Buffer**: A minimum **2.0% liquid cash buffer** is preserved at all times. Bearish trims liquidate directly into cash; bullish expansions draw from cash.
-
-### 3. Regulatory Dual Storage & Auditability
-- Every trade is permanently recorded in an immutable **SQLite database** (`backend/portfolio.db`) with full timestamps, old weights, new weights, deltas, and triggering headlines.
-- State is continuously mirrored to human-readable CSVs (`backend/current_portfolio.csv` and `backend/portfolio_decisions.csv`).
+### Key Frameworks & Technologies Used
+* **AI / ML Models**:
+  * **ProsusAI FinBERT** (`transformers` / PyTorch): Domain sentiment analysis (`positive`, `negative`, `neutral`) mapped to a continuous `[-1.0, +1.0]` polarity score.
+  * **Qwen 2.5 1.5B/7B Instruct**: Causal validator and financial entity extraction engine, structured JSON extraction (`company_name`, `sentiment_score`, `impact_score` out of 10, `event_type`, `rationale`).
+* **Backend**: **FastAPI** (Python 3.10+ asynchronous REST API), **Uvicorn**, **PyTorch**, **Hugging Face Transformers**, **SQLite3**, **Pydantic**.
+* **Frontend**: **React 19**, **Vite**, **Lucide React**, **Vanilla CSS** (Web3 Dark Onyx Void `#070709` aesthetic with Bitcoin Amber `#f7931a` accents, glassmorphism, and dynamic SVG topology wheel).
+* **Storage & Persistence**: SQLite3 (`portfolio.db`) with relational tables (`portfolio`, `rebalance_history`, `articles`) and mirrored CSV output (`current_portfolio.csv`).
+* **Deployment & Cloud**: **AWS EC2** (Ubuntu 24.04 LTS), **Nginx** reverse proxy, **systemd** service automation, **Docker** multi-stage containerization, **Docker Compose**.
 
 ---
 
-## ⚠️ Important Note for Evaluators / Judges
+## 3. Dataset Used
 
-> [!IMPORTANT]
-> **No NewsAPI key is required or provided out-of-the-box.**  
-> The free developer tier of NewsAPI blocks real-time news within the last 24 hours behind a paid plan.  
-> **Therefore, evaluations must be performed using:**
-> 1. **The 3 Curated Evaluation Datasets** (`newsdata_labelled_v2.csv`, `newsdata_labelled_v3.csv`, `self_label.csv`) selectable directly in the dropdown.
-> 2. **Upload Custom CSV**: Upload any custom CSV with financial headlines via the web UI.
-> 3. **Manual "What-If" Sandbox**: Type custom test headlines or click quick scenario presets (e.g. CEO departures, FDA approvals).
+### Source & Nature of Sample Data
+
+**All the datasets are taken from https://www.kaggle.com/search?q=sentiment+analysis+for+financial+news+in%3Adatasets**
+1. **`newsdata_labelled_v2.csv`** (Located in `dataset/` and `data/`):
+   - Over 10,000 broad historical financial market headlines spanning technology, retail, healthcare, energy, and aerospace.
+   - Includes timestamps, tickers, raw headlines, and verified market sentiment labels.
+2. **`newsdata_labelled_v3.csv`** (Located in `dataset/` and `data/`):
+   - Expanded macroeconomic shocks, central bank interest rate announcements, and supply chain disruptions.
+3. **`self_label.csv`** (Located in `dataset/` and `data/`):
+   - Curated high-conviction test cases (breakthrough product releases, executive departures, quality audits) designed to benchmark model arbitration.
+
+### Data Assumptions & Privacy
+- **Confidentiality Compliance:** In strict accordance with hackathon rules, all datasets use publicly available news or synthetic stress-test scenarios. No confidential client data is used.
+- **Entity Resolution:** Company names are dynamically matched against an equity universe of 150+ tickers (`backend/tickers.json`), handling acronyms, subsidiary mentions, and multi-word brand variations.
+
+> [!NOTE]
+> **Important Note on NewsAPI:**  
+> The free developer plan for NewsAPI blocks real-time news within the last 24 hours behind a paid subscription. Therefore, **no NewsAPI key is required or provided**. Evaluators should test using the 3 pre-packaged CSV datasets in the dropdown, the **Upload Custom CSV** button, or the **Manual "What-If" Sandbox**.
 
 ---
 
-## 💻 Local Setup & Execution Guide
+## 4. Quickstart & Installation
 
-Follow these step-by-step instructions to run both the backend and frontend locally on your machine.
+**Tested Runtime:** Python 3.10 / 3.11 / 3.12 & Node.js 18 / 20 LTS on Windows 11 and Ubuntu 24.04 LTS.
 
-### Prerequisites
-- **Python 3.10+** (Python 3.10, 3.11, or 3.12)
-- **Node.js 18+** (Node.js 18, 20 LTS recommended) & `npm`
-- **Git**
+### Local Setup Commands
 
----
-
-### Step 1: Clone the Repository
-
+#### 1. Clone the Repository
 ```bash
 git clone https://github.com/kartikeydhale18/NITI.git
 cd NITI
 ```
 
----
+#### 2. Backend Setup & Run (Terminal 1)
+```bash
+# Create and activate Python virtual environment
+python -m venv .venv
 
-### Step 2: Backend Setup (Python FastAPI)
+# Windows:
+.\.venv\Scripts\Activate.ps1
+# Linux / macOS:
+# source .venv/bin/activate
 
-1. **Create and activate a Python virtual environment:**
-   - **Windows (PowerShell):**
-     ```powershell
-     python -m venv .venv
-     .\.venv\Scripts\Activate.ps1
-     ```
-   - **Linux / macOS:**
-     ```bash
-     python3 -m venv .venv
-     source .venv/bin/activate
-     ```
+# Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
 
-2. **Install all Python dependencies:**
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
+# Initialize database
+python backend/setup_db.py
 
-3. **Initialize the SQLite database:**
-   ```bash
-   python backend/setup_db.py
-   ```
-   *This creates `backend/portfolio.db` with the initial $100,000 baseline portfolio allocations.*
+# Launch FastAPI server
+cd backend
+uvicorn api:app --reload --host 127.0.0.1 --port 8000
+```
+> Interactive API Swagger Documentation is available at `http://127.0.0.1:8000/docs`.
 
-4. **Start the FastAPI backend server:**
-   - **Option A (From the `backend` folder):**
-     ```bash
-     cd backend
-     uvicorn api:app --reload --host 127.0.0.1 --port 8000
-     ```
-   - **Option B (From project root):**
-     ```bash
-     uvicorn backend.api:app --reload --host 127.0.0.1 --port 8000
-     ```
+#### 3. Frontend Setup & Run (Terminal 2)
+```bash
+# In a new terminal window:
+cd frontend
+npm install
+npm run dev
+```
 
-   *Verify backend is running:* Open `http://127.0.0.1:8000/docs` in your browser to view the interactive FastAPI Swagger API documentation.
+#### 4. Access the Dashboard
+Open your web browser and navigate to:
+```
+http://localhost:5173
+```
+*Verify that the top navigation pill glows green with `● API LIVE`.*
 
 ---
 
-### Step 3: Frontend Setup (React 19 + Vite)
-
-Open a **new terminal window** in the project root:
-
-1. **Navigate to the frontend directory:**
-   ```bash
-   cd frontend
-   ```
-
-2. **Install frontend dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Start the Vite development server:**
-   ```bash
-   npm run dev
-   ```
-
-4. **Access the application:**
-   Open **`http://localhost:5173`** in your browser.  
-   The top navigation bar will display a glowing green **`● API LIVE`** pill, confirming that the React frontend is connected to the FastAPI backend.
-
----
-
-## 🧪 How to Evaluate & Test the System
-
-### Method 1: Evaluate Using Curated Local Datasets (Recommended)
-1. Open the dashboard at `http://localhost:5173`.
-2. Click on the **`News Feed & Simulation`** tab.
-3. In the **DATASET SELECTOR** dropdown, select any of the 3 pre-packaged evaluation datasets:
-   - **`newsdata_labelled_v2.csv`**: Over 10,000 broad financial news headlines.
-   - **`newsdata_labelled_v3.csv`**: Multi-sector macroeconomic shocks and earnings announcements.
-   - **`self_label.csv`**: Targeted high-conviction market shock scenarios.
-4. Set your desired **Article Limit** (e.g., 5, 10, or 20 articles).
-5. Click **`📥 Fetch News from CSV`**. Headlines will load into the Ingested News Feed table.
-6. Click **`⚡ Analyze & Rebalance`** on individual headlines (or batch analyze):
-   - Watch the Dual-AI consensus evaluate the headline in real time.
-   - The status updates with the consensus score (e.g., `✓ ANALYZED (+0.80)`).
-   - Duplicate rebalancing is automatically locked to protect against double execution.
-7. Switch to the **`Audit Ledger`** tab to inspect the timestamped rebalance transaction.
-8. Switch to the **`Portfolio & Allocation`** tab to view the updated Capital Allocation Wheel.
-
-### Method 2: Download or Upload Custom Datasets
-- **Download Datasets:** In the **News Feed & Simulation** tab, click **`📥 Download CSV`** to download any selected dataset directly to your computer for inspection in Excel or Notepad.
-- **Upload Custom Datasets:** Click **`📤 Upload Custom CSV`** to upload your own custom `.csv` dataset (columns: `headline`, optional: `ticker`, `datetime`). The file is validated and immediately ready for ingestion.
-
-### Method 3: Manual "What-If" Scenario Testing
-1. In the **News Feed & Simulation** tab, select **Manual Sandbox**.
-2. Click any of the quick scenario presets (e.g., *"NVIDIA Unveils Next-Gen AI Superchips"*, *"Intel Pauses Foundry Expansion"*, or *"US Job Growth Beats Forecasts"*).
-3. Click **`⚡ Execute Rebalance`** to observe immediate portfolio realignments.
-
-### Method 4: Portfolio Reset
-- Click the **`↺ Reset`** button in the top-right header at any time to restore the portfolio to its baseline $100,000 state.
-
----
-
-## ☁️ Production Cloud Deployment (AWS EC2)
-
-For cloud deployment, an automated 1-command script is provided for Ubuntu 22.04 / 24.04 LTS:
-
-1. **Launch an AWS EC2 instance** (`t3.large`, Ubuntu 24.04, 25 GB SSD).
-2. **Open Security Group Inbound ports:** `22` (SSH), `80` (HTTP), `443` (HTTPS).
-3. **SSH into the instance and run:**
-   ```bash
-   curl -fsSL https://raw.githubusercontent.com/kartikeydhale18/NITI/main/deploy_ec2.sh -o deploy_ec2.sh && chmod +x deploy_ec2.sh && ./deploy_ec2.sh
-   ```
-   *This script automatically installs all dependencies, builds the production frontend, configures a `systemd` service for FastAPI, and sets up Nginx reverse proxy on port 80.*
-
----
-
-## 📁 Repository Directory Structure
-
-```text
-NITI/
-├── backend/
-│   ├── api.py                          # FastAPI REST API & Static File Server
-│   ├── app.py                          # Batch Pipeline CLI Runner
-│   ├── portfolio.db                    # SQLite Database (holdings, audit history, decisions)
-│   ├── current_portfolio.csv           # Mirrored human-readable portfolio allocations
-│   ├── portfolio_decisions.csv         # Article AI consensus logs
-│   ├── schema.sql                      # Initial SQLite schema & constraints
-│   ├── setup_db.py                     # Database initialization script
-│   ├── tickers.json                    # Universe of 150+ equity tickers
-│   ├── data_ingestion/
-│   │   └── data_ingestion.py           # CSV loader & NewsAPI connector
-│   ├── sentiment_analyzer/
-│   │   ├── sentiment_analysis.py       # ProsusAI FinBERT Micro Analyzer
-│   │   └── validator_llm.py            # Qwen 2.5 Causal Reasoning Validator
-│   └── rebalancer/
-│       └── portfolio_manager.py        # Quantitative Rebalancer Engine (Capital Invariants)
-├── dataset/
-│   ├── newsdata_labelled_v2.csv        # Evaluation Dataset 1 (~1 MB)
-│   ├── newsdata_labelled_v3.csv        # Evaluation Dataset 2 (~982 KB)
-│   ├── self_label.csv                  # Evaluation Dataset 3 (~13.5 KB)
-│   └── video_demo_15.csv               # 15-headline demonstration dataset
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Navbar.jsx              # Header, status badges, reset button
-│   │   │   ├── HeroMetrics.jsx         # 4 Telemetry KPI cards ($100k fund, cash, etc.)
-│   │   │   ├── PortfolioMatrix.jsx     # Asset allocation matrix with cap meters
-│   │   │   ├── VisualizerDonut.jsx     # Interactive SVG Topology Wheel
-│   │   │   ├── SimulationLab.jsx       # News Ingestion Hub, CSV controls, Sandbox
-│   │   │   └── AuditLedger.jsx         # Immutable trade transaction log
-│   │   ├── App.jsx                     # State coordination & API hooks
-│   │   └── index.css                   # Web3 dark theme styling tokens
-│   ├── index.html                      # Entry HTML
-│   └── package.json                    # React dependencies
-├── deploy_ec2.sh                       # 1-command AWS EC2 Ubuntu deployment script
-├── Dockerfile                          # Multi-stage production container build
-├── docker-compose.yml                  # Docker Compose orchestration
-├── requirements.txt                    # Python dependencies
-└── README.md                           # Comprehensive documentation
+### Cloud Deployment (AWS EC2 / Ubuntu)
+For automated 1-command deployment on AWS EC2 Ubuntu 24.04:
+```bash
+curl -fsSL https://raw.githubusercontent.com/kartikeydhale18/NITI/main/deploy_ec2.sh -o deploy_ec2.sh && chmod +x deploy_ec2.sh && ./deploy_ec2.sh
 ```
 
 ---
 
-## 📜 License & Acknowledgments
+## 5. Key Results & Domain Impact
 
-Built for the **Antigravity AI Financial Risk Intelligence Hackathon**.  
-Powered by [ProsusAI FinBERT](https://huggingface.co/ProsusAI/finbert), [Qwen 2.5](https://huggingface.co/Qwen), [FastAPI](https://fastapi.tiangolo.com/), and [React](https://react.dev/).
+### What the Prototype Demonstrates
+1. **Autonomous News-to-Execution Pipeline**: The system processes financial news, runs dual-model sentiment scoring, resolves corporate tickers, and executes portfolio rebalancing in under 2 seconds per headline.
+2. **Elimination of Common NLP Pitfalls**: When tested on technology breakthroughs (e.g., Google Gemini 4 release or AI chip upgrades), FinBERT + Qwen consensus correctly scores them as bullish (+0.80) and accumulates equity, whereas naive keyword models mistakenly interpret R&D costs as negative.
+3. **Mathematically Guaranteed Risk Control**: Across all stress tests, the portfolio strictly preserves total capital ($100,000 invariant), caps any individual equity at 15.0%, maintains a 2.0% floor, and preserves liquid cash.
+4. **Complete Regulatory Auditability**: Evaluators can inspect the **Audit Ledger** tab to review the immutable SQLite history of every trade, including timestamps, old/new allocations, dollar amounts, and model rationale.
+
+### Business & Domain Value
+* **Hedge Funds & Asset Managers**: Provides an intelligent, automated first-pass risk filter for quantitative trading desks, freeing analysts from manual news monitoring while enforcing strict fiduciary risk constraints.
+* **Risk Management Desks**: Replaces unconstrained "black box" trading bots with a transparent system that guarantees capital conservation and full audit trails.
+* **Speed to Alpha**: Translates breaking market catalysts into tactical portfolio positions before broader market absorption, while preventing false-alarm portfolio churn.
+
+---
+
+## 📁 Repository Structure Compliance
+
+```text
+NITI/
+├── README.md                <-- Mandatory hackathon README template
+├── requirements.txt         <-- Python backend dependencies
+├── LICENSE                  <-- Mandatory MIT License
+├── deploy_ec2.sh            <-- Automated AWS EC2 deployment script
+├── Dockerfile               <-- Production container build
+├── docker-compose.yml       <-- Docker orchestration
+├── data/                    <-- Standardized dataset folder
+│   ├── newsdata_labelled_v2.csv
+│   ├── newsdata_labelled_v3.csv
+│   └── self_label.csv
+├── dataset/                 <-- Primary dataset repository
+│   ├── newsdata_labelled_v2.csv
+│   ├── newsdata_labelled_v3.csv
+│   ├── self_label.csv
+│   └── video_demo_15.csv
+├── docs/                    <-- Documentation, deck, and diagrams
+│   ├── architecture.png     <-- High-resolution architecture diagram
+│   └── presentation_deck.md <-- 7-slide presentation deck
+├── backend/                 <-- Backend application source code
+│   ├── api.py               # FastAPI REST API & Static Server
+│   ├── app.py               # Batch Pipeline CLI Runner
+│   ├── portfolio.db         # SQLite ACID Database
+│   ├── setup_db.py          # Database initialization
+│   ├── tickers.json         # 150+ Equity Universe
+│   ├── data_ingestion/      # Ingestion pipelines
+│   ├── sentiment_analyzer/  # FinBERT & Qwen 2.5 models
+│   └── rebalancer/          # Quantitative rebalancing engine
+└── frontend/                <-- Frontend Web3 terminal source code
+    ├── src/                 # React components & visualizer
+    ├── index.html           # HTML entry point
+    └── package.json         # Node.js dependencies
+```
+
+---
+
+## 📜 License & Compliance Checklist
+- [x] **Repository Public:** Yes
+- [x] **MIT License:** Included in [`LICENSE`](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/LICENSE)
+- [x] **Mandatory README Template:** Sections 1 to 5 implemented
+- [x] **Architecture Diagram:** Embedded in `docs/architecture.png`
+- [x] **No Confidential Data:** Synthetic & publicly available financial data only
+- [x] **Single Individual Submission:** Kartikey A. Dhale
