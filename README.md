@@ -208,7 +208,6 @@ NITI/
 ## 📜 License & Compliance Checklist
 - [x] **Repository Public:** Yes
 - [x] **MIT License:** Included in [`LICENSE`](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/LICENSE)
-- [x] **Mandatory README Template:** Sections 1 to 5 implemented
 - [x] **Architecture Diagram:** Embedded in `docs/NITI_architecture_diagram.png`
 - [x] **No Confidential Data:** Synthetic & publicly available financial data only
-- [x] **Single Individual Submission:** Kartikey A. Dhale
+- [x] **Single Individual Submission:** Kartikey Ajitkumar Dhale
