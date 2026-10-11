@@ -7,3 +7,4 @@ torch
 accelerate
 fastapi
 uvicorn
+python-multipart

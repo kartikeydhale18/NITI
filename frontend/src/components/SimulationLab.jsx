@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, BrainCircuit, 
-  Cpu, Database, Globe, FileSpreadsheet, RefreshCw, Layers, ArrowUpRight, ArrowDownRight, Minus, Trash2
+  Cpu, Database, Globe, FileSpreadsheet, RefreshCw, Layers, ArrowUpRight, ArrowDownRight, Minus, Trash2, Calendar, Upload
 } from 'lucide-react';
 
-const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000/api';
 
 /**
  * SimulationLab Component (News Ingestion Hub & Dual-AI Rebalance Sandbox)
@@ -23,10 +23,19 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
   const [availableCsvs, setAvailableCsvs] = useState(['newsdata_labelled_v2.csv', 'newsdata_labelled_v3.csv', 'self_label.csv']);
   const [selectedCsv, setSelectedCsv] = useState('newsdata_labelled_v2.csv');
   const [csvLimit, setCsvLimit] = useState(10);
+  const fileInputRef = useRef(null);
+  const [isUploadingCsv, setIsUploadingCsv] = useState(false);
+  const [uploadSuccessMsg, setUploadSuccessMsg] = useState(null);
 
   // NewsAPI Ingestion State
   const [newsApiQuery, setNewsApiQuery] = useState('stocks OR finance OR economy');
   const [newsApiLimit, setNewsApiLimit] = useState(10);
+  const [newsApiFromDate, setNewsApiFromDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().split('T')[0];
+  });
+  const [newsApiToDate, setNewsApiToDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   // Ingested Articles Feed
   const [ingestedArticles, setIngestedArticles] = useState([]);
@@ -64,13 +73,19 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
 
   // Fetch articles from backend (CSV or NewsAPI)
   const handleFetchArticles = async () => {
+    await handleFetchArticlesWithFile(selectedCsv);
+  };
+
+  const handleFetchArticlesWithFile = async (csvFileToUse) => {
     setIsFetchingNews(true);
     setFetchError(null);
     try {
       const payload = {
         source: sourceMode,
-        csv_filename: selectedCsv,
+        csv_filename: csvFileToUse || selectedCsv,
         query: newsApiQuery,
+        from_date: sourceMode === 'newsapi' ? newsApiFromDate : undefined,
+        to_date: sourceMode === 'newsapi' ? newsApiToDate : undefined,
         limit: sourceMode === 'csv' ? Number(csvLimit) : Number(newsApiLimit),
         offset: 0
       };
@@ -92,6 +107,47 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
       setFetchError(err.message);
     } finally {
       setIsFetchingNews(false);
+    }
+  };
+
+  // Upload Custom CSV File
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setFetchError('Only .csv files are supported.');
+      return;
+    }
+
+    setIsUploadingCsv(true);
+    setFetchError(null);
+    setUploadSuccessMsg(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch(`${API_BASE}/upload-csv`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to upload CSV');
+
+      // Add to available CSV list if not already present
+      setAvailableCsvs(prev => prev.includes(data.filename) ? prev : [data.filename, ...prev]);
+      setSelectedCsv(data.filename);
+      setUploadSuccessMsg(`✓ Successfully loaded ${data.filename} (${data.rows_count} articles ready)`);
+
+      // Automatically fetch from the new CSV
+      setTimeout(() => {
+        handleFetchArticlesWithFile(data.filename);
+      }, 250);
+    } catch (err) {
+      setFetchError(err.message);
+    } finally {
+      setIsUploadingCsv(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -221,68 +277,105 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
       }}>
         {/* OPTION 1: CSV DATASET INGESTION */}
         {sourceMode === 'csv' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 240px' }}>
-              <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 600 }}>
-                SELECT LOCAL CSV DATASET (from /dataset):
-              </label>
-              <select
-                value={selectedCsv}
-                onChange={(e) => setSelectedCsv(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  background: 'rgba(18, 18, 24, 0.9)',
-                  color: '#ffffff',
-                  fontSize: '0.85rem',
-                  outline: 'none'
-                }}
-              >
-                {availableCsvs.map((file) => (
-                  <option key={file} value={file}>{file}</option>
-                ))}
-              </select>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              <div style={{ flex: '1 1 240px' }}>
+                <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 600 }}>
+                  SELECT CSV DATASET (from /dataset or uploaded):
+                </label>
+                <select
+                  value={selectedCsv}
+                  onChange={(e) => setSelectedCsv(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    background: 'rgba(18, 18, 24, 0.9)',
+                    color: '#ffffff',
+                    fontSize: '0.85rem',
+                    outline: 'none'
+                  }}
+                >
+                  {availableCsvs.map((file) => (
+                    <option key={file} value={file}>{file}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ width: '130px' }}>
+                <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 600 }}>
+                  BATCH LIMIT:
+                </label>
+                <select
+                  value={csvLimit}
+                  onChange={(e) => setCsvLimit(Number(e.target.value))}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    background: 'rgba(18, 18, 24, 0.9)',
+                    color: '#ffffff',
+                    fontSize: '0.85rem',
+                    outline: 'none'
+                  }}
+                >
+                  <option value={5}>5 Articles</option>
+                  <option value={10}>10 Articles</option>
+                  <option value={20}>20 Articles</option>
+                  <option value={50}>50 Articles</option>
+                </select>
+              </div>
+
+              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handleFetchArticles}
+                  disabled={isFetchingNews || isUploadingCsv}
+                  className="btn-primary"
+                  style={{ padding: '10px 20px' }}
+                >
+                  <RefreshCw size={15} className={isFetchingNews ? 'animate-spin' : ''} />
+                  <span>{isFetchingNews ? 'Loading Dataset...' : '📥 Fetch News from CSV'}</span>
+                </button>
+
+                {/* Hidden File Input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                  style={{ display: 'none' }}
+                />
+
+                {/* Upload Custom CSV Button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingCsv || isFetchingNews}
+                  className="btn-secondary"
+                  title="Upload a custom CSV file with headlines to ingest"
+                  style={{
+                    padding: '10px 18px',
+                    borderColor: 'rgba(247, 147, 26, 0.45)',
+                    color: '#f7931a',
+                    background: 'rgba(247, 147, 26, 0.08)'
+                  }}
+                >
+                  <Upload size={15} className={isUploadingCsv ? 'animate-spin' : ''} />
+                  <span>{isUploadingCsv ? 'Uploading CSV...' : '📤 Upload Custom CSV'}</span>
+                </button>
+              </div>
             </div>
 
-            <div style={{ width: '130px' }}>
-              <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 600 }}>
-                BATCH LIMIT:
-              </label>
-              <select
-                value={csvLimit}
-                onChange={(e) => setCsvLimit(Number(e.target.value))}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  background: 'rgba(18, 18, 24, 0.9)',
-                  color: '#ffffff',
-                  fontSize: '0.85rem',
-                  outline: 'none'
-                }}
-              >
-                <option value={5}>5 Articles</option>
-                <option value={10}>10 Articles</option>
-                <option value={20}>20 Articles</option>
-                <option value={50}>50 Articles</option>
-              </select>
-            </div>
-
-            <div style={{ marginTop: '20px' }}>
-              <button
-                type="button"
-                onClick={handleFetchArticles}
-                disabled={isFetchingNews}
-                className="btn-primary"
-                style={{ padding: '10px 22px' }}
-              >
-                <RefreshCw size={15} className={isFetchingNews ? 'animate-spin' : ''} />
-                <span>{isFetchingNews ? 'Loading Dataset...' : '📥 Fetch News from CSV'}</span>
-              </button>
-            </div>
+            {/* Upload Success Banner */}
+            {uploadSuccessMsg && (
+              <div style={{ marginTop: '10px', fontSize: '0.78rem', color: '#00e676', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircle2 size={13} />
+                <span>{uploadSuccessMsg}</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -311,7 +404,51 @@ export default function SimulationLab({ onExecuteRebalance, isAnalyzing, latestR
               />
             </div>
 
-            <div style={{ width: '130px' }}>
+            <div style={{ width: '150px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 600 }}>
+                FROM DATE:
+              </label>
+              <input
+                type="date"
+                value={newsApiFromDate}
+                onChange={(e) => setNewsApiFromDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  background: 'rgba(18, 18, 24, 0.9)',
+                  color: '#ffffff',
+                  fontSize: '0.8rem',
+                  outline: 'none',
+                  colorScheme: 'dark'
+                }}
+              />
+            </div>
+
+            <div style={{ width: '150px' }}>
+              <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 600 }}>
+                TO DATE:
+              </label>
+              <input
+                type="date"
+                value={newsApiToDate}
+                onChange={(e) => setNewsApiToDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  background: 'rgba(18, 18, 24, 0.9)',
+                  color: '#ffffff',
+                  fontSize: '0.8rem',
+                  outline: 'none',
+                  colorScheme: 'dark'
+                }}
+              />
+            </div>
+
+            <div style={{ width: '120px' }}>
               <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 600 }}>
                 ARTICLE LIMIT:
               </label>

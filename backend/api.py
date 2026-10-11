@@ -4,7 +4,7 @@ import json
 import re
 import sqlite3
 from typing import Optional, List, Dict, Any
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -101,6 +101,8 @@ class FetchNewsRequest(BaseModel):
     source: str = "csv"  # "csv" or "newsapi"
     csv_filename: Optional[str] = "newsdata_labelled_v2.csv"
     query: Optional[str] = "finance OR stocks OR economy"
+    from_date: Optional[str] = None  # Format: "YYYY-MM-DD"
+    to_date: Optional[str] = None    # Format: "YYYY-MM-DD"
     limit: Optional[int] = 10
     offset: Optional[int] = 0
 
@@ -129,6 +131,47 @@ def get_news_sources():
         "csv_files": csv_files,
         "default_csv": "newsdata_labelled_v2.csv" if "newsdata_labelled_v2.csv" in csv_files else (csv_files[0] if csv_files else ""),
         "has_newsapi_key": has_newsapi_key
+    }
+
+@app.post("/api/upload-csv")
+async def upload_csv(file: UploadFile = File(...)):
+    """
+    Upload a custom financial news CSV dataset to the server.
+    Validates CSV format and makes it immediately available for ingestion.
+    """
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .csv file.")
+    
+    os.makedirs(DATASET_DIR, exist_ok=True)
+    clean_filename = os.path.basename(file.filename)
+    dest_path = os.path.join(DATASET_DIR, clean_filename)
+    
+    try:
+        content = await file.read()
+        with open(dest_path, "wb") as f:
+            f.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+    
+    df = ingestor.ingest_csv(dest_path)
+    if df is None or df.empty:
+        if os.path.exists(dest_path):
+            os.remove(dest_path)
+        raise HTTPException(status_code=400, detail="The uploaded CSV could not be parsed or contains no rows.")
+    
+    # Check for headline or title column
+    has_headline = any(col.lower() in ["headline", "title", "text", "news"] for col in df.columns)
+    if not has_headline:
+        if os.path.exists(dest_path):
+            os.remove(dest_path)
+        raise HTTPException(status_code=400, detail=f"CSV must contain a 'headline' or 'title' column. Columns found: {list(df.columns)}")
+    
+    row_count = len(df)
+    return {
+        "status": "success",
+        "filename": clean_filename,
+        "rows_count": row_count,
+        "message": f"Successfully uploaded '{clean_filename}' ({row_count} articles)."
     }
 
 @app.get("/api/fetched-articles")
@@ -216,10 +259,10 @@ def fetch_news(req: FetchNewsRequest):
         subset = df.iloc[start:end]
         
         for idx, row in subset.iterrows():
-            headline = str(row.get("headline", "")).strip()
-            content = str(row.get("content", "")).strip() if "content" in row else ""
-            ticker = str(row.get("ticker", "")).strip() if "ticker" in row else ""
-            dt = str(row.get("datetime", "")).strip() if "datetime" in row else ""
+            headline = str(row.get("headline", row.get("title", ""))).strip()
+            content = str(row.get("content", row.get("description", ""))).strip()
+            ticker = str(row.get("ticker", row.get("symbol", ""))).strip()
+            dt = str(row.get("datetime", row.get("date", ""))).strip()
             if headline:
                 raw_articles.append({
                     "headline": headline,
@@ -231,7 +274,11 @@ def fetch_news(req: FetchNewsRequest):
         
     elif req.source == "newsapi":
         query = req.query or "stocks OR finance"
-        api_articles = ingestor.fetch_news_api(query=query)
+        api_articles = ingestor.fetch_news_api(
+            query=query,
+            from_date=req.from_date,
+            to_date=req.to_date
+        )
         if not api_articles:
             raise HTTPException(
                 status_code=400, 
