@@ -3,7 +3,7 @@
 **Candidate Name:** Kartikey A. Dhale  
 **College Email ID:** dhalekartikey@gmail.com  
 **College / Campus:** College of Engineering Pune (COEP) Technological University  
-**GitHub Repository:** https://github.com/kartikeydhale18/NITI  
+**GitHub Repository:** https://github.com/kartikeydhale18/coep-kartikey-dhale-hackathon  
 **Demo Video Link:** [YouTube / Unlisted - Paste Your Video Link Here]  
 **Slide Deck Link (if hosted externally):** [View in docs/presentation_deck.md or Paste External PDF Link Here]  
 **License:** [MIT License (LICENSE)](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/LICENSE)  
@@ -75,7 +75,6 @@ Furthermore, when machine learning algorithms are connected directly to trading 
 * **Backend**: **FastAPI** (Python 3.10+ asynchronous REST API), **Uvicorn**, **PyTorch**, **Hugging Face Transformers**, **SQLite3**, **Pydantic**.
 * **Frontend**: **React 19**, **Vite**, **Lucide React**, **Vanilla CSS** (Web3 Dark Onyx Void `#070709` aesthetic with Bitcoin Amber `#f7931a` accents, glassmorphism, and dynamic SVG topology wheel).
 * **Storage & Persistence**: SQLite3 (`portfolio.db`) with relational tables (`portfolio`, `rebalance_history`, `articles`) and mirrored CSV output (`current_portfolio.csv`).
-* **Deployment & Cloud**: **AWS EC2** (Ubuntu 24.04 LTS), **Nginx** reverse proxy, **systemd** service automation, **Docker** multi-stage containerization, **Docker Compose**.
 
 ---
 
@@ -110,8 +109,8 @@ Furthermore, when machine learning algorithms are connected directly to trading 
 
 #### 1. Clone the Repository
 ```bash
-git clone https://github.com/kartikeydhale18/NITI.git
-cd NITI
+git clone https://github.com/kartikeydhale18/coep-kartikey-dhale-hackathon.git
+cd coep-kartikey-dhale-hackathon
 ```
 
 #### 2. Backend Setup & Run (Terminal 1)
@@ -154,14 +153,6 @@ http://localhost:5173
 
 ---
 
-### Cloud Deployment (AWS EC2 / Ubuntu)
-For automated 1-command deployment on AWS EC2 Ubuntu 24.04:
-```bash
-curl -fsSL https://raw.githubusercontent.com/kartikeydhale18/NITI/main/deploy_ec2.sh -o deploy_ec2.sh && chmod +x deploy_ec2.sh && ./deploy_ec2.sh
-```
-
----
-
 ## 5. Key Results & Domain Impact
 
 ### What the Prototype Demonstrates
@@ -184,9 +175,6 @@ NITI/
 ├── README.md                <-- Mandatory hackathon README template
 ├── requirements.txt         <-- Python backend dependencies
 ├── LICENSE                  <-- Mandatory MIT License
-├── deploy_ec2.sh            <-- Automated AWS EC2 deployment script
-├── Dockerfile               <-- Production container build
-├── docker-compose.yml       <-- Docker orchestration
 ├── data/                    <-- Standardized dataset folder
 │   ├── newsdata_labelled_v2.csv
 │   ├── newsdata_labelled_v3.csv
