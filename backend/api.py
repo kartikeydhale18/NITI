@@ -427,12 +427,18 @@ def run_rebalance(req: RebalanceRequest):
         decision_logic = "Consensus: Both models identify news as neutral."
         final_sentiment = 0.0
     else:
-        override_threshold = 6 if (abs(finbert_score) <= 0.15 or abs(qwen_sentiment) <= 0.15) else 7
-        if impact >= override_threshold:
-            decision_logic = f"High-Impact Override: Models disagree, but Qwen impact is {impact}/10 (>= {override_threshold}). Overriding with Qwen."
+        # Models diverge: direct conflict (opposite signs) or one model is neutral while the other is non-neutral
+        is_direct_conflict = (finbert_score > 0.15 and qwen_sentiment < -0.15) or (finbert_score < -0.15 and qwen_sentiment > 0.15)
+        
+        # High-impact override requires strict conviction: impact >= 7 and substantial sentiment magnitude >= 0.45
+        if impact >= 7 and abs(qwen_sentiment) >= 0.45:
+            decision_logic = f"High-Impact Override: Strong Qwen conviction ({qwen_sentiment:+.2f}) with impact {impact}/10 (>= 7). Overriding FinBERT."
             final_sentiment = qwen_sentiment
+        elif is_direct_conflict:
+            decision_logic = f"Directional Contradiction: FinBERT ({finbert_score:+.2f}) and Qwen ({qwen_sentiment:+.2f}) disagree on polarity with insufficient impact ({impact}/10 < 7). Safely neutralized."
+            final_sentiment = 0.0
         else:
-            decision_logic = f"Low-Impact Disagreement: Models disagree and impact is low ({impact}/10 < {override_threshold}). Safely ignoring."
+            decision_logic = f"Mild Divergence: One model neutral with low conviction from counterpart (impact {impact}/10, sentiment {qwen_sentiment:+.2f}). Noise filtered out (0.0)."
             final_sentiment = 0.0
 
     final_multiplier = final_sentiment

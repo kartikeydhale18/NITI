@@ -32,11 +32,17 @@ class QwenValidator:
     2. Company Extraction:
        - Only output a company name if that company or brand is EXPLICITLY mentioned in the text (e.g., Google, Intel, Microsoft, Facebook).
        - NEVER guess or hallucinate corporate owners for fires, shipwrecks, or accidents if no company is named.
-    3. If a private entity challenges or partners with a public company (e.g., TikTok challenges Facebook), output the public company ("Facebook").
-    4. Only output "None" if the article is purely non-financial (e.g., royal protocol, entertainment celebrity gossip, sports).
+    3. If a competitor or new entrant challenges an incumbent public company (e.g., TikTok challenges Facebook), output the targeted incumbent ("Facebook") with negative sentiment.
+    4. Technology & Product Launches:
+       - Major technological breakthroughs, AI releases, product launches, or commercial upgrades by a company are BULLISH / POSITIVE (+0.5 to +0.9) for that company.
+       - If a company's product or model poses a threat to rivals, the sentiment is POSITIVE for the innovating company (e.g., Google launching Gemini 4 is POSITIVE for Google).
+    5. Only output "None" if the article is purely non-financial (e.g., royal protocol, entertainment celebrity gossip, sports).
 - "sentiment_score": Float between -1.0 (bearish/negative) and +1.0 (bullish/positive).
-  * CRITICAL: Score the real financial/economic tone honestly! (e.g. losses, shortages, inflation, fines, or lockdowns = -0.5 to -1.0; growth, investment boom, or jobs bounce = +0.5 to +1.0).
-- "event_type": News category (e.g., US Macro, Foreign Economy, Regulatory, Supply Chain, Earnings).
+  * CRITICAL: Score the real financial/economic tone honestly!
+    - Negative (-0.5 to -1.0): Losses, penalties, lawsuits, missed earnings, revenue drop, debt crisis, layoffs.
+    - Positive (+0.5 to +1.0): Revenue growth, profit beat, major product launch, AI breakthrough, strategic contracts, market expansion.
+    - Neutral (-0.2 to +0.2): Routine administrative announcements, neutral factual reports.
+- "event_type": News category (e.g., US Macro, Foreign Economy, Regulatory, Supply Chain, Earnings, Product Launch, AI Innovation).
 - "impact_score": Integer from 1 to 10 based on market risk/importance.
 - "rationale": Short explanation.
 
@@ -44,14 +50,14 @@ Examples:
 Article: "US economy expanded by 6.4% in first quarter, pointing to fastest growth in years"
 JSON: {{"company_name": "US MACRO", "sentiment_score": 0.9, "event_type": "US Macro", "impact_score": 8, "rationale": "Fastest US economic expansion in years boosts domestic market outlook"}}
 
+Article: "Google announces Gemini 4 AI model with industry-leading capabilities for cyber defense"
+JSON: {{"company_name": "Google", "sentiment_score": 0.8, "event_type": "Product Launch", "impact_score": 7, "rationale": "Breakthrough next-generation AI model release strengthens Google technology leadership and cloud enterprise value"}}
+
 Article: "Hong Kong ends longest recession in decades"
 JSON: {{"company_name": "Hong Kong", "sentiment_score": 0.9, "event_type": "Foreign Economy", "impact_score": 7, "rationale": "Hong Kong economy stages strong recovery out of recession"}}
 
 Article: "Coronavirus: Fed’s Beige Book finds labour shortages weighing on businesses ."
 JSON: {{"company_name": "US MACRO", "sentiment_score": -0.8, "event_type": "US Macro", "impact_score": 7, "rationale": "US Federal Reserve survey reports acute labour shortages constraining businesses"}}
-
-Article: "Sri Lanka faces ecological disaster as burning container ship starts to sink."
-JSON: {{"company_name": "None", "sentiment_score": -0.8, "event_type": "Disaster", "impact_score": 6, "rationale": "Maritime environmental disaster with no public commercial company mentioned"}}
 
 Article: "France fines Google 220m for antitrust abuse in advertising."
 JSON: {{"company_name": "Google", "sentiment_score": -0.7, "event_type": "Regulatory", "impact_score": 7, "rationale": "Antitrust fine penalties against Google ad dominance"}}
