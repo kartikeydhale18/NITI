@@ -4,15 +4,21 @@ import csv
 import hashlib
 import random
 import re
-from data_ingestion import DataIngestor
-from sentiment_analysis import SentimentAnalyzer
-from validator_llm import QwenValidator
+import sys
+import pandas as pd
 
-PROCESSED_TRACKER_FILE = "processed_articles.json"
-RESULTS_FILE = "portfolio_decisions.csv"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
-# Load Tradable Universe from external JSON file
-TICKERS_FILE = "tickers.json"
+from data_ingestion.data_ingestion import DataIngestor
+from sentiment_analyzer.sentiment_analysis import SentimentAnalyzer
+from sentiment_analyzer.validator_llm import QwenValidator
+from rebalancer.portfolio_manager import PortfolioManager
+
+PROCESSED_TRACKER_FILE = os.path.join(BASE_DIR, "processed_articles.json")
+RESULTS_FILE = os.path.join(BASE_DIR, "portfolio_decisions.csv")
+TICKERS_FILE = os.path.join(BASE_DIR, "tickers.json")
 
 def load_tradable_universe():
     """Loads the massive hashmap of company names to stock tickers."""
@@ -86,6 +92,7 @@ def run_app():
     finbert = SentimentAnalyzer()
     qwen = QwenValidator()
     ingestor = DataIngestor()
+    portfolio_mgr = PortfolioManager()
     
     # 2. Ask User for Input Source
     choice = ""
@@ -103,7 +110,7 @@ def run_app():
     articles_to_process = []
     
     if choice == "1":
-        default_csv = "../dataset/newsdata_labelled_v2.csv"
+        default_csv = os.path.normpath(os.path.join(BASE_DIR, "..", "dataset", "newsdata_labelled_v2.csv"))
         df = None
         while df is None:
             raw_path = input(f"\nEnter CSV dataset path [Default: {default_csv}]: ").strip()
@@ -115,9 +122,13 @@ def run_app():
                 return
                 
             if not os.path.exists(csv_path):
-                print(f"[!] File not found: '{csv_path}'")
-                print("    Please check the filename/spelling and try again (or press Enter for default, 'q' to quit).")
-                continue
+                alt_path = os.path.join(BASE_DIR, csv_path)
+                if os.path.exists(alt_path):
+                    csv_path = alt_path
+                else:
+                    print(f"[!] File not found: '{csv_path}'")
+                    print("    Please check the filename/spelling and try again (or press Enter for default, 'q' to quit).")
+                    continue
                 
             df = ingestor.ingest_csv(csv_path)
             if df is None or df.empty:
@@ -127,14 +138,29 @@ def run_app():
                 
             # Auto-detect headline or text column
             candidate_cols = ['headline', 'Headline', 'title', 'Title', 'text', 'Text', 'news', 'News', 'article', 'Article']
-            text_col = next((c for c in candidate_cols if c in df.columns), None)
-            if not text_col:
-                text_col = df.columns[0]
-                print(f"Notice: Using column '{text_col}' for article text.")
+            text_col = next((c for c in candidate_cols if c in df.columns), df.columns[0])
+            print(f"Using column '{text_col}' for article text.")
+
+            # Auto-detect ticker or symbol column if available
+            candidate_ticker_cols = ['ticker', 'Ticker', 'symbol', 'Symbol', 'stock', 'Stock']
+            ticker_col = next((c for c in candidate_ticker_cols if c in df.columns), None)
+            if ticker_col:
+                print(f"[Dataset]: Detected pre-labeled ticker column '{ticker_col}'.")
             else:
-                print(f"Using column '{text_col}' for article text.")
+                print("[Dataset]: No pre-labeled ticker column in CSV. Qwen will identify companies and resolve via tickers.json.")
                 
-            articles_to_process = df[text_col].dropna().astype(str).tolist()
+            articles_to_process = []
+            for _, row in df.iterrows():
+                val = str(row[text_col]).strip() if pd.notna(row[text_col]) else ""
+                if not val:
+                    continue
+                predefined_tick = ""
+                if ticker_col and pd.notna(row[ticker_col]):
+                    cand = str(row[ticker_col]).strip().upper()
+                    if cand and cand not in ['NONE', 'UNKNOWN', 'NULL', 'NAN', 'N/A', '']:
+                        predefined_tick = cand
+                articles_to_process.append({"text": val, "csv_ticker": predefined_tick})
+
             if not articles_to_process:
                 print(f"[!] Column '{text_col}' has no valid text entries. Please try another file.")
                 df = None
@@ -159,8 +185,11 @@ def run_app():
             
         articles = ingestor.fetch_news_api(query=query, from_date=from_date)
         if articles:
-            # Extract just the titles from the API JSON response
-            articles_to_process = [article.get('title', '') for article in articles if article.get('title')]
+            # Extract titles from API
+            articles_to_process = [
+                {"text": article.get('title', '').strip(), "csv_ticker": ""} 
+                for article in articles if article.get('title')
+            ]
 
     if not articles_to_process:
         print("No articles found to process. Exiting.")
@@ -178,7 +207,10 @@ def run_app():
     processed_list = load_processed_articles()
     
     try:
-        for i, article_text in enumerate(articles_to_process):
+        for i, item in enumerate(articles_to_process):
+            article_text = item["text"]
+            csv_ticker = item.get("csv_ticker", "")
+
             # Create a deterministic unique ID/Hash for the article text so we can track it across sessions
             article_hash = hashlib.md5(article_text.encode('utf-8')).hexdigest()
             
@@ -198,15 +230,40 @@ def run_app():
             # Phase 2: Qwen JSON Extraction
             qwen_json = qwen.analyze_article(article_text)
             
-            # Hybrid Entity & Ticker Resolution (Qwen + Text-matching fallback)
-            raw_company = str(qwen_json.get('company_name', 'Unknown')).strip().upper()
-            resolved_company, resolved_ticker = resolve_company_and_ticker(raw_company, article_text)
+            # Hybrid Entity & Ticker Resolution Strategy:
+            # 1. If CSV has a pre-labeled ticker, check and extract directly
+            # 2. If not, let Qwen identify the entity and verify against tickers.json
+            resolved_ticker = None
+            resolved_company = None
+
+            if csv_ticker:
+                if csv_ticker in TRADABLE_UNIVERSE.values():
+                    # Direct match with a stock ticker in tradable universe (e.g. 'AAPL', 'SPY')
+                    resolved_ticker = csv_ticker
+                    resolved_company = next((k for k, v in TRADABLE_UNIVERSE.items() if v == csv_ticker), csv_ticker)
+                    print(f">> [Dataset Extraction]: Extracted pre-labeled ticker from CSV: '{resolved_ticker}' ({resolved_company})")
+                elif csv_ticker in TRADABLE_UNIVERSE:
+                    # Match with a company name in tradable universe (e.g. 'APPLE')
+                    resolved_company = csv_ticker
+                    resolved_ticker = TRADABLE_UNIVERSE[csv_ticker]
+                    print(f">> [Dataset Extraction]: Matched pre-labeled company '{resolved_company}' -> Ticker: '{resolved_ticker}'")
+                else:
+                    # Valid ticker string from CSV not in default map
+                    resolved_ticker = csv_ticker
+                    resolved_company = csv_ticker
+                    print(f">> [Dataset Extraction]: Using pre-labeled ticker from CSV: '{resolved_ticker}'")
+
+            if not resolved_ticker:
+                # Fallback: Qwen guesses and checks current tickers.json
+                raw_company = str(qwen_json.get('company_name', 'Unknown')).strip().upper()
+                resolved_company, resolved_ticker = resolve_company_and_ticker(raw_company, article_text)
+                print(f">> [Qwen Guess & Resolve]: Extracted entity '{resolved_company}' -> Ticker: '{resolved_ticker}' (via tickers.json)")
             
             # Inject resolved company and ticker back into the JSON
             qwen_json['company_name'] = resolved_company
             qwen_json['ticker'] = resolved_ticker
             
-            print(f"[Qwen Extraction]: Company: '{resolved_company}' -> Ticker: {resolved_ticker}, Sentiment: {qwen_json.get('sentiment_score')}, Impact: {qwen_json.get('impact_score')}/10")
+            print(f"[Analysis Summary]: Entity: '{resolved_company}' [{resolved_ticker}], Sentiment: {qwen_json.get('sentiment_score')}, Impact: {qwen_json.get('impact_score')}/10")
             
             # Phase 3: Validation
             validation = qwen.validate_results(qwen_json, finbert_score)
@@ -254,8 +311,20 @@ def run_app():
                 final_multiplier = 0.0
             else:
                 print(f">>> FINAL PORTFOLIO REBALANCE MULTIPLIER: {final_multiplier} ({ticker}) <<<")
+                
+            # Phase 5: Live Portfolio Rebalancing Engine
+            if final_multiplier != 0.0 and ticker not in ['UNTRADABLE', 'NONE', '']:
+                rebal_res = portfolio_mgr.rebalance(ticker, final_multiplier, article_text)
+                if rebal_res.get("status") == "REBALANCED":
+                    print(f">> [Rebalance Engine]: {rebal_res['ticker']} weight: {rebal_res['old_weight_pct']} -> {rebal_res['new_weight_pct']} (Change: {rebal_res.get('change_pct')}) | Cash: {rebal_res['cash_weight_pct']} (Allocated: {rebal_res['allocated_usd']})")
+                    print(f">> [Database]: Live update committed to portfolio.db & current_portfolio.csv")
+                elif rebal_res.get("status") == "UNTRACKED":
+                    print(f">> [Rebalance Engine]: {rebal_res.get('reason')}")
+            else:
+                if final_multiplier == 0.0:
+                    print(">> [Rebalance Engine]: Sentiment is 0.0 (Neutral). Skipping rebalance — portfolio weights preserved.")
             
-            # Save results to the CSV
+            # Save results to the CSV mirror and SQLite
             with open(RESULTS_FILE, mode='a', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 writer.writerow([
@@ -266,7 +335,15 @@ def run_app():
                     impact,
                     final_multiplier
                 ])
-            print(f"[!] Saved decision to {RESULTS_FILE}")
+            portfolio_mgr.log_decision(
+                article_text.strip(),
+                ticker,
+                finbert_score,
+                qwen_sentiment,
+                impact,
+                final_multiplier
+            )
+            print(f"[!] Saved decision to {RESULTS_FILE} and portfolio.db")
             
             # Save to processed tracking list so we don't evaluate it again in the future
             save_processed_article(article_hash)

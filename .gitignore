@@ -1,9 +1,20 @@
 # API KEY OF NEWSAPI.org
 .env
 
+# virtual environment
+.venv/
+
 # Dataset and implementation plan
 dataset/
 
 #python cache files
 __pycache__/
 *.pyc
+.models_cache/
+*.db
+*.sqlite3
+
+#temporary news files
+*.csv
+*.json
+!backend/tickers.json

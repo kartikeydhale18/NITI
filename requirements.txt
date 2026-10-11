@@ -2,3 +2,6 @@ pandas
 requests
 python-docx
 dotenv
+transformers
+torch
+accelerate
