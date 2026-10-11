@@ -4,9 +4,10 @@
 **College Email ID:** dhalekartikey@gmail.com  
 **College / Campus:** College of Engineering Pune (COEP) Technological University  
 **GitHub Repository:** https://github.com/kartikeydhale18/coep-kartikey-dhale-hackathon  
-**Demo Video Link:** [YouTube / Unlisted - Paste Your Video Link Here]  
+**Demo Video Link:** https://youtu.be/2aCvHyfg5jQ?si=7WyWLc9Z--xoaexo  
 **Slide Deck Link (if hosted externally):** [View in docs/presentation_deck.md or Paste External PDF Link Here]  
 **License:** [MIT License (LICENSE)](file:///e:/Kartikey%20A%20Dhale/Projects/SnP/LICENSE)  
+**Vercel link (Frontend):** https://coep-kartikey-dhale-hackathon.vercel.app/
 
 ---
 
