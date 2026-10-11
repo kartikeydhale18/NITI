@@ -22,16 +22,20 @@ DECISIONS_CSV = os.path.join(BASE_DIR, "portfolio_decisions.csv")
 from rebalancer.portfolio_manager import PortfolioManager
 
 def init_database(reset=False):
-    if reset and os.path.exists(DB_PATH):
-        print(f"[!] Resetting existing database: {DB_PATH}")
-        os.remove(DB_PATH)
-
     print(f"[*] Initializing database at: {DB_PATH}")
     with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
         schema_sql = f.read()
 
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
+        if reset:
+            print("[!] Resetting database tables from schema.sql...")
+            cursor.execute("DROP TABLE IF EXISTS portfolio")
+            cursor.execute("DROP TABLE IF EXISTS rebalance_history")
+            cursor.execute("DROP TABLE IF EXISTS article_decisions")
+            cursor.execute("DROP TABLE IF EXISTS fetched_articles")
+            conn.commit()
+
         cursor.executescript(schema_sql)
         conn.commit()
 

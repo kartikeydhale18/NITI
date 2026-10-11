@@ -1,7 +1,9 @@
 pandas
 requests
 python-docx
-dotenv
+python-dotenv
 transformers
 torch
 accelerate
+fastapi
+uvicorn

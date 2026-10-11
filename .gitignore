@@ -18,3 +18,8 @@ __pycache__/
 *.csv
 *.json
 !backend/tickers.json
+!frontend/*.json
+
+# Frontend dependencies & build artifacts
+frontend/node_modules/
+frontend/dist/

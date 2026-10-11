@@ -123,17 +123,19 @@ class PortfolioManager:
                     # Bullish: Buy stock, spend cash, subject to MAX_STOCK_WEIGHT (15%)
                     available_cash = max(0.0, current_cash - MIN_CASH_PCT)
                     actual_shift = min(actual_shift, available_cash)
-                    if (current_stock_weight + actual_shift) > MAX_STOCK_WEIGHT:
+                    if current_stock_weight >= MAX_STOCK_WEIGHT:
+                        actual_shift = 0.0
+                    elif (current_stock_weight + actual_shift) > MAX_STOCK_WEIGHT:
                         actual_shift = max(0.0, MAX_STOCK_WEIGHT - current_stock_weight)
                     
-                    new_stock_weight = round(current_stock_weight + actual_shift, 4)
-                    new_cash_weight = round(current_cash - actual_shift, 4)
+                    new_stock_weight = round(min(MAX_STOCK_WEIGHT, current_stock_weight + actual_shift), 4)
+                    new_cash_weight = round(current_cash - (new_stock_weight - current_stock_weight), 4)
                 else:
                     # Bearish: Sell stock, increase cash, subject to MIN_STOCK_WEIGHT (2%)
                     max_reduction = max(0.0, current_stock_weight - MIN_STOCK_WEIGHT)
                     actual_shift = min(actual_shift, max_reduction)
-                    new_stock_weight = round(current_stock_weight - actual_shift, 4)
-                    new_cash_weight = round(current_cash + actual_shift, 4)
+                    new_stock_weight = round(max(MIN_STOCK_WEIGHT, current_stock_weight - actual_shift), 4)
+                    new_cash_weight = round(current_cash + (current_stock_weight - new_stock_weight), 4)
 
             # Update SQLite state
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

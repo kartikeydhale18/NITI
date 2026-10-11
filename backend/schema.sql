@@ -37,6 +37,21 @@ CREATE TABLE IF NOT EXISTS article_decisions (
     rebalance_multiplier REAL
 );
 
+-- 4. Fetched Ingested Articles Table (Tracks article pipeline status & deduplication)
+CREATE TABLE IF NOT EXISTS fetched_articles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    headline TEXT NOT NULL UNIQUE,
+    content TEXT DEFAULT '',
+    ticker TEXT DEFAULT '',
+    source TEXT DEFAULT '',
+    published_date TEXT DEFAULT '',
+    status TEXT DEFAULT 'PENDING',
+    analyzed_multiplier REAL DEFAULT NULL,
+    analyzed_at TEXT DEFAULT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_articles_status ON fetched_articles(status);
+
 -- ========================================================
 -- Initial Portfolio Seed Data ($100,000 Starting Fund)
 -- ========================================================
